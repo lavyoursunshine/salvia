@@ -180,12 +180,34 @@ main{min-height:70vh;}
 .gateway-foot{font-size:12px; color:var(--ink-400); margin-top:16px; text-align:center;}
 
 /* ============ HERO (BERANDA) ============ */
-.hero{padding:64px 0 20px;}
-.hero-grid{display:grid; grid-template-columns:1.15fr 0.85fr; gap:40px; align-items:center;}
-.hero h1{font-size:clamp(32px,4.6vw,52px); line-height:1.12; margin:16px 0 18px; max-width:620px;}
+.hero {
+    padding: 80px 20px 40px 20px; 
+}
+
+.hero-grid {
+    display: grid;
+    grid-template-columns: 1fr; 
+    gap: 40px; 
+    text-align: center; 
+}
+
+.hero h1 {
+    font-size: clamp(28px, 8vw, 48px);
+    line-height: 1.2;
+    margin: 0 auto 20px auto; 
+    max-width: 600px;
+}
+
 .hero h1 .accent{background:linear-gradient(135deg,var(--blue-600),var(--cyan-500)); -webkit-background-clip:text; background-clip:text; color:transparent;}
-.hero p.lead{font-size:17px; color:var(--ink-500); max-width:520px; margin-bottom:30px;}
-.hero-actions{display:flex; gap:14px; flex-wrap:wrap;}
+
+hero p.lead {
+    margin: 0 auto 30px auto; 
+}
+
+.hero-actions {
+    justify-content: center; /* Tombol jadi di tengah */
+}
+
 .hero-visual{position:relative; padding:30px;}
 .hero-ring{position:relative; width:100%; aspect-ratio:1; max-width:340px; margin:0 auto; display:flex; align-items:center; justify-content:center;}
 .hero-ring-stat{text-align:center;}
