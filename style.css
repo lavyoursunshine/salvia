@@ -186,26 +186,46 @@ main{min-height:70vh;}
 
 .hero-grid {
     display: grid;
-    grid-template-columns: 1fr; 
+    grid-template-columns: 1.15fr 0.85fr; 
     gap: 40px; 
-    text-align: center; 
+    align-items: center;
+    text-align: left; 
 }
 
 .hero h1 {
-    font-size: clamp(28px, 8vw, 48px);
-    line-height: 1.2;
-    margin: 0 auto 20px auto; 
-    max-width: 600px;
+    font-size: clamp(32px, 4.6vw, 52px); 
+    line-height: 1.12;
+    margin: 16px 0 18px 0; 
+    max-width: 620px;
 }
 
 .hero h1 .accent{background:linear-gradient(135deg,var(--blue-600),var(--cyan-500)); -webkit-background-clip:text; background-clip:text; color:transparent;}
 
-hero p.lead {
-    margin: 0 auto 30px auto; 
+.hero p.lead {
+    margin: 0 0 30px 0; 
+    max-width: 520px;
 }
 
 .hero-actions {
-    justify-content: center; /* Tombol jadi di tengah */
+    display: flex;
+    justify-content: flex-start; /* Tombol rata kiri */
+    gap: 14px;
+    flex-wrap: wrap;
+}
+@media (max-width: 900px) {
+    .hero-grid {
+        grid-template-columns: 1fr; /* Jadi 1 kolom tumpuk */
+        text-align: center; /* Teks jadi ke tengah biar estetik di layar sempit */
+    }
+    
+    .hero h1, .hero p.lead {
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .hero-actions {
+        justify-content: center; /* Tombol ikut ke tengah */
+    }
 }
 
 .hero-visual{position:relative; padding:30px;}
