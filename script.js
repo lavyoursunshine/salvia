@@ -1,384 +1,413 @@
 
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{
-  --bg-1:#eaf3fd; --bg-2:#dbe9fc; --bg-3:#f6faff;
-  --ink-900:#0a2647; --ink-800:#123163; --ink-700:#1c3c66; --ink-600:#2c4d78; --ink-500:#4a6483; --ink-400:#7189a3; --ink-300:#a3b8cd;
-  --blue-700:#123a86; --blue-600:#1f56c9; --blue-500:#2e6ff2; --blue-400:#5c8ffb; --blue-300:#a9c6ff; --blue-100:#e7f0ff;
-  --cyan-500:#12b3c4; --cyan-300:#8fe3ea;
-  --glass:rgba(255,255,255,0.55); --glass-strong:rgba(255,255,255,0.8);
-  --risk-mid:#f2a63c; --risk-high:#ff3366; --r-lg:24px;
-  --font-d:'Sora',sans-serif; --font-b:'Plus Jakarta Sans',sans-serif;
-}
-body{font-family:var(--font-b); color:var(--ink-700); background:linear-gradient(160deg,var(--bg-1) 0%,var(--bg-2) 45%,var(--bg-3) 100%); min-height:100vh;}
+/* ================= DATA ================= */
+const SYMPTOMS = [
+  {id:'demam', label:'Demam Tinggi', points:5, region:'kepala'},
+  {id:'menggigil', label:'Menggigil', points:2, region:'kepala'},
+  {id:'sakitKepala', label:'Sakit Kepala', points:2, region:'kepala'},
+  {id:'dehidrasi', label:'Tanda Dehidrasi', points:8, region:'sistemik'},
+  {id:'kelelahan', label:'Kelelahan Akut', points:3, region:'sistemik'},
+  {id:'mual', label:'Mual Intens', points:4, region:'epigastrium'},
+  {id:'muntah', label:'Muntah', points:4, region:'epigastrium'},
+  {id:'kram', label:'Kram Perut Akut', points:7, region:'abdomen'},
+  {id:'diareAir', label:'Diare Berair', points:5, region:'abdomen'},
+  {id:'diareDarah', label:'Diare Berdarah', points:10, region:'abdomen'},
+];
+const REGIONS = {
+  kepala:{label:'Kepala / Neurologis', icon:'head'},
+  sistemik:{label:'Sistemik / Rongga Mulut', icon:'pulse'},
+  epigastrium:{label:'Epigastrium / Pencernaan Atas', icon:'stomach'},
+  abdomen:{label:'Abdomen & Usus Bawah', icon:'abdomen'},
+};
+const REGION_ORDER = ['kepala','sistemik','epigastrium','abdomen'];
 
-.hasil-grid {
-    display: grid;
-    grid-template-columns: 340px 1fr;
-    gap: 32px; 
-    margin-top: 40px; 
-    padding: 0 20px; 
-    max-width: 1100px;
-    margin-left: auto;
-    margin-right: auto;
-}
-.hasil-detail-card {
-    padding: 32px;
-    margin-bottom: 24px; 
-    border-radius: var(--r-lg);
-    background: var(--glass);
-    border: 1px solid rgba(255,255,255,0.75);
-}
-@media (max-width: 940px) {
-    .hasil-grid { grid-template-columns: 1fr; gap: 20px; }
-}
+const BEHAVIORS = [
+  {id:'cuciKran', label:'Mencuci daging mentah di bawah kran', points:8, zone:'wastafel', tip:'Hindari mencuci daging unggas mentah langsung di kran terbuka; gunakan wadah tertutup agar percikan aerosol tidak menyebar.'},
+  {id:'cuciTangan', label:'Tidak cuci tangan pakai sabun usai pegang daging', points:6, zone:'wastafel', tip:'Cuci tangan dengan sabun minimal 20 detik setiap selesai kontak dengan daging mentah.'},
+  {id:'spons', label:'Spons cuci piring basah tidak disterilkan', points:2, zone:'wastafel', tip:'Ganti atau sterilkan spons cuci piring secara rutin dengan air panas.'},
+  {id:'talenan', label:'Talenan kayu/pori dipakai gabung daging & sayur', points:8, zone:'konter', tip:'Pisahkan talenan: satu khusus daging mentah, satu untuk sayur/buah — gunakan kode warna agar tidak tertukar.'},
+  {id:'thawing', label:'Thawing daging di suhu ruang lebih dari 2 jam', points:5, zone:'konter', tip:'Cairkan daging beku di dalam kulkas, bukan dibiarkan di suhu ruang.'},
+  {id:'lap', label:'Lap dapur dipakai berulang untuk tangan & meja', points:4, zone:'konter', tip:'Gunakan lap terpisah untuk tangan dan permukaan meja, cuci secara berkala dengan air panas.'},
+  {id:'telur', label:'Telur mentah tanpa wadah tertutup di kulkas', points:4, zone:'kulkas', tip:'Simpan telur dalam wadah tertutup di rak kulkas, bukan di rak pintu.'},
+  {id:'dagingRak', label:'Daging mentah disimpan di rak atas kulkas', points:4, zone:'kulkas', tip:'Simpan daging mentah di rak paling bawah kulkas agar cairan tidak menetes ke makanan lain.'},
+  {id:'suhuMasak', label:'Memasak unggas dengan suhu inti di bawah 75°C', points:7, zone:'kompor', tip:'Pastikan suhu inti daging unggas mencapai minimal 75°C sebelum disajikan.'},
+  {id:'sisaTerbuka', label:'Makanan matang/sisa dibiarkan terbuka >2 jam', points:2, zone:'kompor', tip:'Simpan makanan matang dalam wadah tertutup dan dinginkan dalam 2 jam setelah dimasak.'},
+];
+const ZONES = {
+  wastafel:{label:'Area Wastafel', icon:'droplet'},
+  konter:{label:'Area Konter & Persiapan', icon:'knife'},
+  kulkas:{label:'Area Kulkas', icon:'snowflake'},
+  kompor:{label:'Area Kompor & Penyajian', icon:'flame'},
+};
+const ZONE_ORDER = ['wastafel','konter','kulkas','kompor'];
 
+const PATHOGEN_PHASES = [
+  {tag:'Fase 1', name:'Ingestion & Acid Tolerance', desc:'Salmonella harus melewati benteng asam lambung. Dibutuhkan sekitar 100 ribu hingga 1 juta sel bakteri agar sebagian berhasil selamat — namun ambang ini turun tajam pada kondisi asam lambung rendah (hipoklorhidria).'},
+  {tag:'Fase 2', name:'Adhesion', desc:'Bakteri yang lolos menempelkan diri pada dinding usus menggunakan struktur rambut halus (fimbriae), mengunci posisi pada sel epitel dan sel M di brush border usus.'},
+  {tag:'Fase 3', name:'Invasion (SPI-1)', desc:'Melalui sistem sekresi Tipe III (T3SS), Salmonella menyuntikkan protein efektor ke sel inang, memaksa membran sel melipat (ruffling) dan "menelan" bakteri masuk ke dalam.'},
+  {tag:'Fase 4', name:'Intracellular (SPI-2)', desc:'Alih-alih dihancurkan, bakteri bersembunyi dalam kantung pelindung (Salmonella-containing vacuole) dan memblokir penggabungan dengan lisosom — menjadikannya bunker replikasi yang aman.'},
+  {tag:'Fase 5', name:'Inflammation', desc:'Sistem imun melepaskan gelombang sel radang ke lumen usus, merusak epitel dan mengganggu transpor cairan — inilah asal muasal manifestasi klinis diare berair.'},
+  {tag:'Fase 6', name:'Systemic Dissemination', desc:'Pada galur tertentu, bakteri membajak sel makrofag sebagai kendaraan untuk menyebar melalui sistem limfatik menuju hati dan limpa, memicu demam enterik/tifoid.'},
+];
 
-.container{max-width:1180px; margin:0 auto; padding:0 28px;}
-h1,h2,h3,h4{font-family:var(--font-d); color:var(--ink-900); font-weight:700;}
-.btn{display:inline-flex; align-items:center; gap:9px; padding:14px 26px; border-radius:999px; border:none; font-weight:600;}
+const FUNFACTS = [
+  {icon:'droplet', title:'Dosis Infeksius yang Rapuh', desc:'Salmonella butuh 100 ribu–1 juta sel bakteri untuk menembus asam lambung sehat — tapi ambang ini turun drastis pada penderita asam lambung rendah.'},
+  {icon:'eye', title:'Tak Terdeteksi Indra', desc:'Kontaminasi Salmonella tidak mengubah rasa, bau, atau tampilan makanan, sehingga sulit dikenali tanpa kewaspadaan ekstra.'},
+  {icon:'clock', title:'Bertahan Berhari-hari', desc:'Bakteri ini bisa bertahan hidup di permukaan kering seperti talenan dan spons selama berjam-jam hingga berhari-hari.'},
+  {icon:'chicken', title:'Pembawa Tanpa Gejala', desc:'Unggas yang tampak sehat secara klinis pun bisa menjadi asymptomatic carrier tanpa menunjukkan tanda sakit sama sekali.'},
+  {icon:'thermo', title:'Satu Angka Penentu: 75°C', desc:'Memasak daging unggas hingga suhu internal minimal 75°C adalah satu-satunya cara memastikan bakteri mati total.'},
+  {icon:'wave', title:'Bahaya di Balik Kran', desc:'Mencuci ayam mentah di bawah kran justru meningkatkan risiko — percikan air kontaminan bisa menyebar hingga radius 1 meter.'},
+];
 
-/* ============ RESET & BASE ============ */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{
-  --bg-1:#eaf3fd; --bg-2:#dbe9fc; --bg-3:#f6faff;
-  --ink-900:#0a2647; --ink-800:#123163; --ink-700:#1c3c66; --ink-600:#2c4d78;
-  --ink-500:#4a6483; --ink-400:#7189a3; --ink-300:#a3b8cd;
-  --blue-700:#123a86; --blue-600:#1f56c9; --blue-500:#2e6ff2; --blue-400:#5c8ffb; --blue-300:#a9c6ff; --blue-100:#e7f0ff;
-  --cyan-500:#12b3c4; --cyan-300:#8fe3ea;
-  --glass:rgba(255,255,255,0.55); --glass-strong:rgba(255,255,255,0.8); --glass-soft:rgba(255,255,255,0.38);
-  --glass-border:rgba(255,255,255,0.75); --glass-border-soft:rgba(148,185,255,0.4);
-  --shadow-1:0 10px 40px rgba(23,54,97,0.14), 0 2px 10px rgba(23,54,97,0.08);
-  --shadow-2:0 20px 60px rgba(23,54,97,0.18);
-  --risk-low:#00c96b; --risk-low-bright:#00e575; --risk-mid:#f2a63c; --risk-high:#ff3366;
-  --r-xl:30px; --r-lg:24px; --r-md:16px; --r-sm:10px;
-  --font-d:'Sora',sans-serif; --font-b:'Plus Jakarta Sans',sans-serif; --font-m:'JetBrains Mono',monospace;
-}
-html{scroll-behavior:smooth;}
-body{
-  font-family:var(--font-b); color:var(--ink-700); background:linear-gradient(160deg,var(--bg-1) 0%,var(--bg-2) 45%,var(--bg-3) 100%);
-  min-height:100vh; overflow-x:hidden; line-height:1.5; -webkit-font-smoothing:antialiased;
-}
-h1,h2,h3,h4{font-family:var(--font-d); color:var(--ink-900); font-weight:700; letter-spacing:-0.01em;}
-button{font-family:inherit; cursor:pointer;}
-img,svg{display:block;}
-a{color:inherit; text-decoration:none;}
-::selection{background:var(--blue-300); color:var(--ink-900);}
-::-webkit-scrollbar{width:10px; height:10px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--blue-300); border-radius:10px;}
-:focus-visible{outline:3px solid var(--blue-500); outline-offset:3px; border-radius:4px;}
-@media (prefers-reduced-motion:reduce){*{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important;}}
+const SUMBER = [
+  {icon:'chicken', title:'Unggas & Telur Mentah', desc:'Reservoir utama — saluran cerna unggas menjadi tempat tinggal alami bakteri Salmonella.'},
+  {icon:'milk', title:'Daging & Susu Tidak Dipasteurisasi', desc:'Produk hewani mentah atau setengah matang menyimpan risiko kontaminasi yang signifikan.'},
+  {icon:'knife', title:'Kontaminasi Silang Alat Masak', desc:'Biofilm menempel di pori-pori talenan kayu dan spons yang jarang disterilkan.'},
+  {icon:'droplet2', title:'Air atau Es Batu Tercemar', desc:'Sumber air yang tidak terjamin kebersihannya dapat menjadi jalur penularan tersembunyi.'},
+  {icon:'leaf', title:'Sayur & Buah Mentah', desc:'Produk segar yang tercemar pupuk kandang atau air irigasi tidak higienis berisiko membawa bakteri.'},
+  {icon:'paw', title:'Hewan Peliharaan', desc:'Reptil, unggas hias, dan beberapa hewan peliharaan lain dapat menjadi pembawa (carrier) Salmonella.'},
+];
 
-/* ============ LAYOUT UTILS ============ */
-.container{max-width:1180px; margin:0 auto; padding:0 28px;}
-.eyebrow{font-family:var(--font-m); font-size:12.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--blue-600); font-weight:600; display:flex; align-items:center; gap:8px;}
-.eyebrow::before{content:''; width:18px; height:2px; background:var(--blue-500); border-radius:2px; display:inline-block;}
-.section-head{max-width:640px; margin-bottom:44px;}
-.section-head h2{font-size:clamp(28px,3.6vw,40px); margin-top:10px; line-height:1.15;}
-.section-head p{margin-top:14px; color:var(--ink-500); font-size:16px;}
-.pill{display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px; font-size:13px; font-weight:600;}
+const ICONS = {
+  head:'<circle cx="12" cy="8" r="5"/><path d="M9 21v-4M15 21v-4"/>',
+  pulse:'<path d="M3 12h4l2-7 4 14 2-7h6"/>',
+  stomach:'<path d="M8 3c0 3-3 3-3 7a7 7 0 0 0 14 0c0-2-1-3-2-3s-2 2-4 2-2-3-5-6Z"/>',
+  abdomen:'<circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/>',
+  droplet:'<path d="M12 2s7 8 7 13a7 7 0 1 1-14 0c0-5 7-13 7-13Z"/>',
+  knife:'<path d="M4 20 18 6M14 2l8 8-4 4-8-8Z"/>',
+  snowflake:'<path d="M12 2v20M4 7l16 10M20 7 4 17M2 12h20"/>',
+  flame:'<path d="M12 2s5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 1 1 2 2 2 0-3-2-4-2-8 1 1 3 0 3 0Z"/>',
+  eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',
+  chicken:'<path d="M12 3c3 0 5 2 5 5 0 2-1 3-1 3l3 2-3 1 1 3-3-1-1 3-2-3-2 3-1-3-3 1 1-3-3-1 3-2s-1-1-1-3c0-3 2-5 5-5Z"/>',
+  thermo:'<rect x="10" y="3" width="4" height="12" rx="2"/><circle cx="12" cy="18" r="3"/>',
+  wave:'<path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0M2 18c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/>',
+  milk:'<path d="M9 2h6l1 4-2 2v11a2 2 0 0 1-2 2h-0a2 2 0 0 1-2-2V8L8 6l1-4Z"/>',
+  droplet2:'<path d="M12 2s7 8 7 13a7 7 0 1 1-14 0c0-5 7-13 7-13Z"/>',
+  leaf:'<path d="M4 20C4 10 10 4 20 4c0 10-6 16-16 16Z"/><path d="M4 20 14 10"/>',
+  paw:'<circle cx="7" cy="8" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="8" r="2"/><path d="M6 15a5 5 0 0 1 12 0c0 3-3 4-6 4s-6-1-6-4Z"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  lock:'<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  target:'<path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/>',
+};
+function iconSvg(name, cls){ return '<svg class="'+(cls||'icon')+'" viewBox="0 0 24 24">'+(ICONS[name]||ICONS.check)+'</svg>'; }
 
-/* ============ AURORA BG ============ */
-.aurora{position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none;}
-.blob{position:absolute; border-radius:50%; filter:blur(90px); opacity:0.55; will-change:transform;}
-.b1{width:520px; height:520px; background:radial-gradient(circle,var(--blue-300),transparent 70%); top:-160px; left:-120px; animation:float1 22s ease-in-out infinite;}
-.b2{width:460px; height:460px; background:radial-gradient(circle,var(--cyan-300),transparent 70%); top:30%; right:-160px; animation:float2 26s ease-in-out infinite;}
-.b3{width:420px; height:420px; background:radial-gradient(circle,#c9dcff,transparent 70%); bottom:-140px; left:30%; animation:float3 20s ease-in-out infinite;}
-@keyframes float1{0%,100%{transform:translate(0,0);}50%{transform:translate(60px,50px);}}
-@keyframes float2{0%,100%{transform:translate(0,0);}50%{transform:translate(-50px,60px);}}
-@keyframes float3{0%,100%{transform:translate(0,0);}50%{transform:translate(40px,-40px);}}
+/* ================= STATE ================= */
+const state = {
+  screeningDone:false,
+  symptoms:{}, behaviors:{},
+  openRegion:null, openZone:null,
+  activePhase:0, result:null,
+};
+SYMPTOMS.forEach(s=>state.symptoms[s.id]=false);
+BEHAVIORS.forEach(b=>state.behaviors[b.id]=false);
 
-/* ============ GLASS ============ */
-.glass{background:var(--glass); backdrop-filter:blur(22px) saturate(180%); -webkit-backdrop-filter:blur(22px) saturate(180%); border:1px solid var(--glass-border); border-radius:var(--r-lg); box-shadow:var(--shadow-1);}
-.glass-strong{background:var(--glass-strong); backdrop-filter:blur(26px) saturate(180%); -webkit-backdrop-filter:blur(26px) saturate(180%); border:1px solid var(--glass-border); border-radius:var(--r-lg); box-shadow:var(--shadow-2);}
+/* ================= GATEWAY ================= */
+const gatewayCheck = document.getElementById('gatewayCheck');
+const gatewayBtn = document.getElementById('gatewayBtn');
+gatewayCheck.addEventListener('change', ()=>{ gatewayBtn.disabled = !gatewayCheck.checked; });
+gatewayBtn.addEventListener('click', ()=>{
+  document.getElementById('gateway').classList.add('hidden');
+  document.body.style.overflow='';
+});
 
-/* ============ BUTTONS ============ */
-.btn{display:inline-flex; align-items:center; justify-content:center; gap:9px; padding:14px 26px; border-radius:999px; border:none; font-weight:600; font-size:15px; transition:transform .18s ease, box-shadow .18s ease, background .18s ease; white-space:nowrap;}
-.btn:active{transform:scale(0.97);}
-.btn-primary{background:linear-gradient(135deg,var(--blue-500),var(--blue-700)); color:#fff; box-shadow:0 10px 26px rgba(46,111,242,0.35);}
-.btn-primary:hover{box-shadow:0 14px 34px rgba(46,111,242,0.45); transform:translateY(-2px);}
-.btn-ghost{background:var(--glass-strong); color:var(--blue-700); border:1px solid var(--glass-border-soft);}
-.btn-ghost:hover{background:#fff; transform:translateY(-2px);}
-.btn-outline{background:transparent; color:var(--blue-700); border:1.5px solid var(--blue-400);}
-.btn-outline:hover{background:var(--blue-100);}
-.btn:disabled{opacity:0.5; cursor:not-allowed; transform:none !important;}
-.btn svg{width:18px; height:18px;}
-
-/* ============ ICONS (shared stroke style) ============ */
-.icon{stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;}
-
-/* ============ NAVBAR ============ */
-.navbar{position:sticky; top:0; z-index:60; padding:14px 0;}
-.navbar-inner{max-width:1180px; margin:0 auto; padding:10px 18px; display:flex; align-items:center; justify-content:space-between; border-radius:999px;}
-.brand{display:flex; align-items:center; gap:10px;}
-.brand-mark{width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,var(--blue-500),var(--cyan-500)); display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px rgba(46,111,242,.35);}
-.brand-mark .icon{stroke:#fff; width:22px; height:22px;}
-.brand-text{display:flex; flex-direction:column; line-height:1.1;}
-.brand-text b{font-family:var(--font-d); font-size:19px; color:var(--ink-900); letter-spacing:0.02em;}
-.brand-text span{font-size:10.5px; color:var(--ink-400); font-weight:600; letter-spacing:0.06em; text-transform:uppercase;}
-.nav-links{display:flex; align-items:center; gap:4px;}
-.nav-btn{display:flex; align-items:center; gap:7px; padding:10px 16px; border-radius:999px; border:none; background:transparent; color:var(--ink-600); font-weight:600; font-size:14.5px; transition:all .2s ease;}
-.nav-btn .icon{width:16px; height:16px;}
-.nav-btn:hover{background:rgba(255,255,255,0.6); color:var(--blue-700);}
-.nav-btn.active{background:linear-gradient(135deg,var(--blue-500),var(--blue-600)); color:#fff; box-shadow:0 6px 16px rgba(46,111,242,.3);}
-.nav-btn.locked{color:var(--ink-300);}
-.nav-btn.locked:hover{background:rgba(255,255,255,0.4); color:var(--ink-400);}
-.nav-label{display:inline;}
-@media (max-width:760px){
-  .navbar-inner{padding:8px 10px;}
-  .brand-text span{display:none;}
-  .nav-label{display:none;}
-  .nav-btn{padding:11px;}
-  .nav-btn .icon{width:19px; height:19px;}
+/* ================= TOAST ================= */
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2800);
 }
 
-/* ============ TOAST ============ */
-.toast{position:fixed; left:50%; bottom:28px; transform:translate(-50%,120%); z-index:200; padding:14px 22px; border-radius:14px; background:var(--ink-900); color:#fff; font-size:14px; font-weight:600; box-shadow:0 14px 30px rgba(10,38,71,.35); transition:transform .35s cubic-bezier(.2,.9,.3,1.2); display:flex; align-items:center; gap:10px;}
-.toast.show{transform:translate(-50%,0);}
-.toast .icon{width:18px; height:18px; stroke:var(--risk-mid);}
+/* ================= NAV / VIEW SWITCH ================= */
+function switchView(view){
+  if(view==='hasil' && !state.screeningDone){
+    showToast('Selesaikan screening terlebih dahulu untuk melihat hasil.');
+    return;
+  }
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>switchView(btn.dataset.view));
+});
 
-/* ============ VIEWS ============ */
-main{min-height:70vh;}
-.view{display:none; animation:viewIn .5s ease both;}
-.view.active{display:block;}
-@keyframes viewIn{from{opacity:0; transform:translateY(14px);}to{opacity:1; transform:translateY(0);}}
+/* ================= EDUKASI TABS ================= */
+document.querySelectorAll('.edu-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.edu-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.edu-panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+  });
+});
 
-/* ============ GATEWAY MODAL ============ */
-.gateway{position:fixed; inset:0; z-index:500; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,38,71,0.35); backdrop-filter:blur(14px); transition:opacity .5s ease, visibility .5s ease;}
-.gateway.hidden{opacity:0; visibility:hidden; pointer-events:none;}
-.gateway-card{max-width:560px; width:100%; padding:40px 36px; text-align:left; position:relative; animation:popIn .5s cubic-bezier(.2,.9,.3,1.1);}
-@keyframes popIn{from{opacity:0; transform:scale(.92) translateY(20px);}to{opacity:1; transform:scale(1) translateY(0);}}
-.gateway-icon{width:58px; height:58px; border-radius:16px; background:linear-gradient(135deg,#ffdca8,var(--risk-mid)); display:flex; align-items:center; justify-content:center; margin-bottom:18px; box-shadow:0 8px 20px rgba(242,166,60,.35);}
-.gateway-icon .icon{stroke:#fff; width:30px; height:30px;}
-.gateway-card h3{font-size:24px; margin-bottom:12px;}
-.gateway-card p{color:var(--ink-600); font-size:15px; margin-bottom:12px;}
-.gateway-card p b{color:var(--ink-900);}
-.gateway-check{display:flex; align-items:flex-start; gap:10px; margin:22px 0; padding:14px 16px; background:var(--blue-100); border-radius:var(--r-md); cursor:pointer;}
-.gateway-check input{margin-top:3px; width:18px; height:18px; accent-color:var(--blue-600); flex-shrink:0;}
-.gateway-check span{font-size:14px; color:var(--ink-700); font-weight:500;}
-.gateway-foot{font-size:12px; color:var(--ink-400); margin-top:16px; text-align:center;}
+/* ---- Pathogenesis timeline ---- */
+function renderTimeline(){
+  const track = document.getElementById('timelineTrack');
+  track.innerHTML = PATHOGEN_PHASES.map((p,i)=>
+    `<div class="tl-node glass ${i===state.activePhase?'active':''}" data-i="${i}">
+      <div class="tl-num">${p.tag}</div>
+      <div class="tl-name">${p.name}</div>
+      <div class="tl-tag">Klik untuk detail</div>
+    </div>`).join('');
+  track.querySelectorAll('.tl-node').forEach(n=>{
+    n.addEventListener('click', ()=>{ state.activePhase = parseInt(n.dataset.i); renderTimeline(); renderTlDetail(); });
+  });
+}
+function renderTlDetail(){
+  const p = PATHOGEN_PHASES[state.activePhase];
+  document.getElementById('tlDetail').innerHTML = `
+    <div class="tl-detail-eyebrow"><div class="tl-detail-badge">${state.activePhase+1}</div><div class="eyebrow" style="margin:0">${p.tag}</div></div>
+    <h4>${p.name}</h4><p>${p.desc}</p>`;
+}
+renderTimeline(); renderTlDetail();
 
-/* ============ HERO (BERANDA) ============ */
-.hero{padding:64px 0 20px;}
-.hero-grid{display:grid; grid-template-columns:1.15fr 0.85fr; gap:40px; align-items:center;}
-.hero h1{font-size:clamp(32px,4.6vw,52px); line-height:1.12; margin:16px 0 18px; max-width:620px;}
-.hero h1 .accent{background:linear-gradient(135deg,var(--blue-600),var(--cyan-500)); -webkit-background-clip:text; background-clip:text; color:transparent;}
-.hero p.lead{font-size:17px; color:var(--ink-500); max-width:520px; margin-bottom:30px;}
-.hero-actions{display:flex; gap:14px; flex-wrap:wrap;}
-.hero-visual{position:relative; padding:30px;}
-.hero-ring{position:relative; width:100%; aspect-ratio:1; max-width:340px; margin:0 auto; display:flex; align-items:center; justify-content:center;}
-.hero-ring-stat{text-align:center;}
-.hero-ring-stat .num{font-family:var(--font-m); font-size:38px; font-weight:700; color:var(--blue-700);}
-.hero-ring-stat .lbl{font-size:12px; color:var(--ink-400); font-weight:600; text-transform:uppercase; letter-spacing:.08em; margin-top:4px;}
-.mini-badges{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:18px;}
-.mini-badge{display:flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; background:var(--glass-strong); font-size:12px; font-weight:600; color:var(--ink-600); border:1px solid var(--glass-border-soft);}
-.mini-badge .icon{width:14px; height:14px; stroke:var(--blue-600);}
-@media (max-width:900px){.hero-grid{grid-template-columns:1fr;} .hero-visual{order:-1; padding:10px;} .hero-ring{max-width:220px;}}
+/* ---- Fun facts & sumber grids ---- */
+function renderInfoGrid(elId, data){
+  document.getElementById(elId).innerHTML = data.map(d=>
+    `<div class="info-card glass reveal in-view"><div class="ic-icon">${iconSvg(d.icon)}</div><h5>${d.title}</h5><p>${d.desc}</p></div>`).join('');
+}
+renderInfoGrid('funfactGrid', FUNFACTS);
+renderInfoGrid('sumberGrid', SUMBER);
 
-/* Disclaimer banner (persistent) */
-.disclaimer-banner{display:flex; gap:18px; align-items:flex-start; padding:24px 26px; margin:34px 0; border-left:4px solid var(--risk-mid); background:linear-gradient(90deg,rgba(242,166,60,0.14),rgba(255,255,255,0.5));}
-.disclaimer-banner .dicon{width:44px; height:44px; border-radius:12px; background:var(--risk-mid); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
-.disclaimer-banner .dicon .icon{stroke:#fff; width:24px; height:24px;}
-.disclaimer-banner h4{font-size:16px; margin-bottom:6px;}
-.disclaimer-banner p{font-size:14.5px; color:var(--ink-600);}
+/* ================= SOMATIC MATRIX ================= */
+function renderRegionPanels(){
+  const wrap = document.getElementById('regionPanels');
+  wrap.innerHTML = REGION_ORDER.map(rKey=>{
+    const r = REGIONS[rKey];
+    const items = SYMPTOMS.filter(s=>s.region===rKey);
+    const selectedCount = items.filter(s=>state.symptoms[s.id]).length;
+    const isOpen = state.openRegion===rKey;
+    return `<div class="region-panel glass ${isOpen?'expanded':''}" data-region="${rKey}">
+      <div class="rp-head" data-toggle="${rKey}">
+        <div class="rp-head-left"><div class="rp-icon">${iconSvg(r.icon)}</div><h5>${r.label}</h5></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="rp-count">${selectedCount}/${items.length}</span>
+          <svg class="rp-chevron icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+      <div class="rp-body"><div class="rp-body-inner">
+        ${items.map(s=>`<label class="check-row"><input type="checkbox" data-symptom="${s.id}" ${state.symptoms[s.id]?'checked':''}><span class="cr-label">${s.label}</span><span class="cr-points">+${s.points}</span></label>`).join('')}
+      </div></div>
+    </div>`;
+  }).join('');
 
-/* Flow steps */
-.flow-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-top:10px;}
-.flow-card{padding:22px 18px; position:relative;}
-.flow-num{font-family:var(--font-m); font-size:13px; color:var(--blue-500); font-weight:700;}
-.flow-card h4{font-size:15px; margin:10px 0 6px;}
-.flow-card p{font-size:12.8px; color:var(--ink-500); line-height:1.45;}
-.flow-arrow{position:absolute; right:-14px; top:50%; transform:translateY(-50%); width:20px; height:20px; stroke:var(--blue-300); display:none;}
-@media (min-width:901px){.flow-arrow{display:block;}}
-@media (max-width:900px){.flow-grid{grid-template-columns:repeat(2,1fr);}}
-@media (max-width:560px){.flow-grid{grid-template-columns:1fr;}}
+  wrap.querySelectorAll('[data-toggle]').forEach(h=>{
+    h.addEventListener('click', ()=>{
+      const key = h.dataset.toggle;
+      state.openRegion = state.openRegion===key ? null : key;
+      renderRegionPanels(); syncHotspots();
+    });
+  });
+  wrap.querySelectorAll('input[data-symptom]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      state.symptoms[cb.dataset.symptom] = cb.checked;
+      renderRegionPanels(); syncHotspots(); updateProgress();
+    });
+  });
+}
+function syncHotspots(){
+  document.querySelectorAll('.hotspot').forEach(hs=>{
+    const region = hs.dataset.region;
+    const hasSel = SYMPTOMS.some(s=>s.region===region && state.symptoms[s.id]);
+    hs.classList.toggle('open', state.openRegion===region);
+    hs.classList.toggle('has-selection', hasSel);
+  });
+}
+document.querySelectorAll('.hotspot').forEach(hs=>{
+  const activate = ()=>{
+    const key = hs.dataset.region;
+    state.openRegion = state.openRegion===key ? null : key;
+    renderRegionPanels(); syncHotspots();
+    document.getElementById('regionPanels').scrollIntoView({behavior:'smooth', block:'nearest'});
+  };
+  hs.addEventListener('click', activate);
+  hs.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); activate(); }});
+});
 
-/* One health pillars */
-.pillar-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:20px;}
-.pillar-card{padding:28px 24px;}
-.pillar-icon{width:50px; height:50px; border-radius:14px; display:flex; align-items:center; justify-content:center; margin-bottom:16px;}
-.pillar-icon .icon{stroke:#fff; width:26px; height:26px;}
-.pillar-card h4{font-size:17px; margin-bottom:8px;}
-.pillar-card p{font-size:14px; color:var(--ink-500);}
-@media (max-width:820px){.pillar-grid{grid-template-columns:1fr;}}
+/* ================= BIOSAFETY BLUEPRINT ================= */
+function renderZoneGrid(){
+  const grid = document.getElementById('zoneGrid');
+  grid.innerHTML = ZONE_ORDER.map(zKey=>{
+    const z = ZONES[zKey];
+    const items = BEHAVIORS.filter(b=>b.zone===zKey);
+    const selectedCount = items.filter(b=>state.behaviors[b.id]).length;
+    const isOpen = state.openZone===zKey;
+    return `<div class="zone-card glass ${isOpen?'open':''}" data-zone="${zKey}">
+      <div class="zone-card-top"><div class="zone-icon">${iconSvg(z.icon)}</div><span class="rp-count">${selectedCount}/${items.length}</span></div>
+      <h5>${z.label}</h5>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.zone-card').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      const key = c.dataset.zone;
+      state.openZone = state.openZone===key ? null : key;
+      renderZoneGrid(); renderZonePanels();
+      document.getElementById('zonePanels').scrollIntoView({behavior:'smooth', block:'nearest'});
+    });
+  });
+}
+function renderZonePanels(){
+  const wrap = document.getElementById('zonePanels');
+  if(!state.openZone){ wrap.innerHTML=''; return; }
+  const zKey = state.openZone; const z = ZONES[zKey];
+  const items = BEHAVIORS.filter(b=>b.zone===zKey);
+  wrap.innerHTML = `<div class="zone-panel glass expanded">
+    <div class="rp-head"><div class="rp-head-left"><div class="rp-icon">${iconSvg(z.icon)}</div><h5>${z.label}</h5></div></div>
+    <div class="rp-body expanded"><div class="rp-body-inner">
+      ${items.map(b=>`<label class="check-row"><input type="checkbox" data-behavior="${b.id}" ${state.behaviors[b.id]?'checked':''}><span class="cr-label">${b.label}</span><span class="cr-points">+${b.points}</span></label>`).join('')}
+    </div></div></div>`;
+  wrap.querySelectorAll('input[data-behavior]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      state.behaviors[cb.dataset.behavior] = cb.checked;
+      renderZoneGrid(); renderZonePanels(); updateProgress();
+    });
+  });
+}
 
-/* Quick facts strip */
-.fact-strip{display:grid; grid-template-columns:repeat(4,1fr); gap:16px;}
-.fact-chip{padding:20px; text-align:center;}
-.fact-chip .num{font-family:var(--font-m); font-size:22px; font-weight:700; color:var(--blue-700);}
-.fact-chip .lbl{font-size:12px; color:var(--ink-500); margin-top:6px;}
-@media (max-width:760px){.fact-strip{grid-template-columns:repeat(2,1fr);}}
+function updateProgress(){
+  const sCount = SYMPTOMS.filter(s=>state.symptoms[s.id]).length;
+  const bCount = BEHAVIORS.filter(b=>state.behaviors[b.id]).length;
+  document.getElementById('progSymptom').textContent = sCount+'/10';
+  document.getElementById('progBehavior').textContent = bCount+'/10';
+}
 
-section.block{padding:56px 0;}
+renderRegionPanels(); syncHotspots(); renderZoneGrid(); renderZonePanels(); updateProgress();
 
-/* ============ EDUKASI ============ */
-.edu-tabs{display:flex; gap:8px; margin-bottom:36px; flex-wrap:wrap; padding:6px; border-radius:999px;}
-.edu-tab{padding:11px 20px; border-radius:999px; border:none; background:transparent; font-weight:600; font-size:14px; color:var(--ink-500); display:flex; align-items:center; gap:8px; transition:all .2s;}
-.edu-tab .icon{width:16px; height:16px;}
-.edu-tab.active{background:linear-gradient(135deg,var(--blue-500),var(--blue-600)); color:#fff; box-shadow:0 8px 20px rgba(46,111,242,.3);}
-.edu-panel{display:none;}
-.edu-panel.active{display:block; animation:viewIn .4s ease both;}
+/* ================= THERMAL PROCESSING + SCORING ================= */
+function computeScore(){
+  let score = 0; const selS=[], selB=[];
+  SYMPTOMS.forEach(s=>{ if(state.symptoms[s.id]){ score+=s.points; selS.push(s); } });
+  BEHAVIORS.forEach(b=>{ if(state.behaviors[b.id]){ score+=b.points; selB.push(b); } });
+  const highSpecial = state.symptoms.diareDarah && state.symptoms.dehidrasi;
+  let category;
+  if(score>65 || highSpecial) category='tinggi';
+  else if(score>=36) category='sedang';
+  else category='rendah';
+  return {score, category, selS, selB, highSpecial};
+}
 
-/* Pathogenesis timeline */
-.timeline-track{display:flex; gap:12px; overflow-x:auto; padding:6px 6px 20px; scrollbar-width:thin;}
-.tl-node{flex:0 0 auto; width:150px; padding:18px 16px; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; border:1px solid transparent;}
-.tl-node:hover{transform:translateY(-4px);}
-.tl-node.active{border-color:var(--blue-400); background:var(--glass-strong); box-shadow:0 12px 28px rgba(46,111,242,.2);}
-.tl-node .tl-num{font-family:var(--font-m); font-size:12px; color:var(--blue-500); font-weight:700;}
-.tl-node .tl-name{font-size:13.5px; font-weight:700; color:var(--ink-800); margin-top:8px; line-height:1.3;}
-.tl-node .tl-tag{font-size:11px; color:var(--ink-400); margin-top:4px;}
-.tl-detail{padding:32px; margin-top:8px; min-height:180px;}
-.tl-detail .tl-detail-eyebrow{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
-.tl-detail .tl-detail-badge{width:38px; height:38px; border-radius:11px; background:linear-gradient(135deg,var(--blue-500),var(--cyan-500)); display:flex; align-items:center; justify-content:center; color:#fff; font-family:var(--font-m); font-weight:700; font-size:14px;}
-.tl-detail h4{font-size:20px;}
-.tl-detail p{color:var(--ink-600); font-size:15px; line-height:1.7;}
+const THERMAL_STATUSES = [
+  'Mengompilasi data gejala...',
+  'Memetakan rantai transmisi dapur...',
+  'Merumuskan indeks risiko...'
+];
+document.getElementById('processBtn').addEventListener('click', runThermalProcessing);
 
-/* Cross contamination network */
-.network-wrap{padding:36px 24px; overflow-x:auto;}
-.network-flow{display:flex; align-items:center; gap:0; min-width:760px;}
-.net-col{display:flex; flex-direction:column; gap:14px; flex:1;}
-.net-col.center{align-items:center; justify-content:center;}
-.net-node{padding:16px 18px; text-align:left;}
-.net-node.reservoir{background:linear-gradient(135deg,rgba(46,111,242,.14),rgba(255,255,255,.6));}
-.net-node h5{font-size:14px; margin-bottom:5px; color:var(--ink-800);}
-.net-node p{font-size:12.5px; color:var(--ink-500); line-height:1.5;}
-.net-target{width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg,var(--blue-600),var(--cyan-500)); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; box-shadow:0 14px 30px rgba(46,111,242,.35); flex-shrink:0;}
-.net-target .icon{width:26px; height:26px; stroke:#fff; margin-bottom:6px;}
-.net-target span{font-size:12px; font-weight:700; padding:0 8px;}
-.net-arrow-col{display:flex; align-items:center; justify-content:center; flex:0 0 60px;}
-.net-arrow-col svg{width:44px; height:20px; stroke:var(--blue-300);}
+function runThermalProcessing(){
+  const overlay = document.getElementById('thermalOverlay');
+  const valEl = document.getElementById('thermalVal');
+  const statusEl = document.getElementById('thermalStatus');
+  const ringFg = document.getElementById('thermalRingFg');
+  const circumference = 2*Math.PI*96;
+  overlay.classList.add('show');
+  document.body.style.overflow='hidden';
+  const duration = 4000; const start = performance.now();
+  statusEl.textContent = THERMAL_STATUSES[0];
 
-/* Fun facts / sources grid */
-.card-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
-.info-card{padding:24px; height:100%;}
-.info-card .ic-icon{width:42px; height:42px; border-radius:12px; background:var(--blue-100); display:flex; align-items:center; justify-content:center; margin-bottom:14px;}
-.info-card .ic-icon .icon{stroke:var(--blue-600); width:22px; height:22px;}
-.info-card h5{font-size:15px; margin-bottom:8px; line-height:1.35;}
-.info-card p{font-size:13.5px; color:var(--ink-500); line-height:1.55;}
-@media (max-width:900px){.card-grid{grid-template-columns:repeat(2,1fr);}}
-@media (max-width:600px){.card-grid{grid-template-columns:1fr;}}
+  function frame(now){
+    const elapsed = Math.min(now-start, duration);
+    const t = elapsed/duration;
+    const temp = 25 + t*(75-25);
+    valEl.textContent = Math.round(temp);
+    const offset = circumference*(1-t);
+    ringFg.style.strokeDashoffset = offset;
+    const stageIdx = Math.min(2, Math.floor(t*3));
+    statusEl.textContent = THERMAL_STATUSES[stageIdx];
+    if(elapsed < duration){ requestAnimationFrame(frame); }
+    else{ finishProcessing(overlay); }
+  }
+  requestAnimationFrame(frame);
+}
 
-/* ============ SCREENING ============ */
-.screen-head{display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:20px; margin-bottom:36px;}
-.progress-row{display:flex; gap:14px; flex-wrap:wrap;}
-.progress-chip{padding:10px 16px; display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; color:var(--ink-600);}
-.progress-chip .dot{width:8px; height:8px; border-radius:50%; background:var(--blue-500);}
-.progress-chip b{font-family:var(--font-m); color:var(--blue-700);}
+function finishProcessing(overlay){
+  setTimeout(()=>{
+    overlay.classList.remove('show');
+    document.body.style.overflow='';
+    state.result = computeScore();
+    state.screeningDone = true;
+    document.getElementById('navHasil').classList.remove('locked');
+    renderHasil();
+    switchView('hasil');
+  }, 350);
+}
 
-.screen-module{padding:34px; margin-bottom:32px;}
-.screen-module-head{display:flex; align-items:center; gap:14px; margin-bottom:8px;}
-.screen-module-head .smh-icon{width:44px; height:44px; border-radius:13px; background:linear-gradient(135deg,var(--blue-500),var(--blue-700)); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
-.screen-module-head .smh-icon .icon{stroke:#fff; width:23px; height:23px;}
-.screen-module-head h3{font-size:19px;}
-.screen-module-head p{font-size:13.5px; color:var(--ink-500); margin-top:2px;}
+/* ================= HASIL RENDER ================= */
+const RISK_META = {
+  rendah:{label:'Risiko Rendah', color:'var(--risk-low)', title:'Household Ecosystem Clear', closing:'Ekosistem rumah tangga Anda tergolong aman. Pertahankan kebiasaan baik ini secara konsisten.'},
+  sedang:{label:'Risiko Sedang', color:'var(--risk-mid)', title:'Rantai Kontaminasi Terdeteksi', closing:'Terdapat rantai kontaminasi silang yang perlu diputus. Bersihkan seluruh permukaan dapur dengan disinfektan dan air panas.'},
+  tinggi:{label:'Risiko Tinggi', color:'var(--risk-high)', title:'Sistem Biosekuriti Dapur Gagal Total', closing:'Indikasi kuat paparan terkonfirmasi. Prioritaskan konsultasi medis segera sebelum menindaklanjuti rekomendasi dapur.'},
+};
 
-.somatic-wrap{display:grid; grid-template-columns:260px 1fr; gap:30px; margin-top:24px; align-items:start;}
-.somatic-svg-wrap{display:flex; justify-content:center; position:relative;}
-.somatic-svg-wrap svg{width:100%; max-width:220px;}
-.hotspot{cursor:pointer;}
-.hotspot .hs-ring{fill:none; stroke:var(--blue-400); stroke-width:2; opacity:.55; animation:pulseRing 2.6s ease-in-out infinite;}
-.hotspot .hs-dot{fill:var(--blue-500); transition:fill .2s ease, r .2s ease;}
-.hotspot.open .hs-dot{fill:var(--cyan-500); r:9;}
-.hotspot.has-selection .hs-dot{fill:var(--risk-high);}
-.hotspot:hover .hs-ring{opacity:.9;}
-@keyframes pulseRing{0%{stroke-opacity:.7; r:12;}70%{stroke-opacity:0; r:22;}100%{stroke-opacity:0; r:22;}}
+function renderHasil(){
+  const r = state.result; if(!r) return;
+  const meta = RISK_META[r.category];
+  const circumference = 2*Math.PI*82;
+  const badge = document.getElementById('riskBadge');
+  badge.textContent = meta.label;
+  badge.style.background = meta.color;
+  document.getElementById('riskTitle').textContent = meta.title;
+  document.getElementById('riskClosing').textContent = meta.closing;
+  document.getElementById('scoreVal').textContent = '0';
+  const sgFg = document.getElementById('sgFg');
+  sgFg.style.stroke = meta.color;
+  sgFg.style.strokeDashoffset = circumference;
 
-.region-panels, .zone-panels{display:flex; flex-direction:column; gap:12px;}
-.region-panel, .zone-panel{padding:0; overflow:hidden; transition:max-height .35s ease;}
-.rp-head{display:flex; align-items:center; justify-content:space-between; padding:16px 20px; cursor:pointer;}
-.rp-head-left{display:flex; align-items:center; gap:12px;}
-.rp-head .rp-icon{width:34px; height:34px; border-radius:10px; background:var(--blue-100); display:flex; align-items:center; justify-content:center;}
-.rp-head .rp-icon .icon{width:18px; height:18px; stroke:var(--blue-600);}
-.rp-head h5{font-size:14.5px; color:var(--ink-800);}
-.rp-count{font-family:var(--font-m); font-size:12px; color:var(--blue-600); font-weight:700; background:var(--blue-100); padding:3px 9px; border-radius:999px;}
-.rp-chevron{width:16px; height:16px; stroke:var(--ink-400); transition:transform .3s ease;}
-.region-panel.expanded .rp-chevron{transform:rotate(180deg);}
-.rp-body{max-height:0; overflow:hidden; transition:max-height .35s ease;}
-.region-panel.expanded .rp-body, .zone-panel.expanded .rp-body{max-height:400px;}
-.rp-body-inner{padding:0 20px 18px; display:flex; flex-direction:column; gap:4px;}
-.check-row{display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:12px; cursor:pointer; transition:background .18s ease;}
-.check-row:hover{background:rgba(46,111,242,.07);}
-.check-row input{width:19px; height:19px; accent-color:var(--blue-600); flex-shrink:0;}
-.check-row .cr-label{font-size:14px; color:var(--ink-700); font-weight:500;}
-.check-row .cr-points{margin-left:auto; font-family:var(--font-m); font-size:11.5px; color:var(--ink-400);}
+  requestAnimationFrame(()=>{
+    sgFg.style.strokeDashoffset = circumference*(1-Math.min(r.score,100)/100);
+    animateNumber(document.getElementById('scoreVal'), 0, r.score, 1100);
+  });
 
-.kitchen-blueprint{position:relative; margin-top:24px; padding:26px; border-radius:var(--r-lg); background-image:linear-gradient(rgba(46,111,242,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(46,111,242,.08) 1px, transparent 1px); background-size:24px 24px; border:1.5px dashed var(--blue-300);}
-.zone-grid{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
-.zone-card{padding:18px 20px; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease;}
-.zone-card:hover{transform:translateY(-3px);}
-.zone-card.open{border:1px solid var(--blue-400); box-shadow:0 14px 30px rgba(46,111,242,.2);}
-.zone-card-top{display:flex; align-items:center; justify-content:space-between;}
-.zone-icon{width:38px; height:38px; border-radius:11px; background:var(--blue-100); display:flex; align-items:center; justify-content:center;}
-.zone-icon .icon{width:20px; height:20px; stroke:var(--blue-600);}
-.zone-card h5{font-size:14.5px; margin-top:12px; color:var(--ink-800);}
-@media (max-width:820px){.somatic-wrap{grid-template-columns:1fr;} .zone-grid{grid-template-columns:1fr;}}
+  document.getElementById('hasilBanner').classList.toggle('show', r.category==='tinggi');
 
-.screen-cta{display:flex; justify-content:center; margin-top:8px;}
-.screen-cta .btn{padding:17px 40px; font-size:16px;}
+  const bdS = document.getElementById('bdSymptoms');
+  bdS.innerHTML = r.selS.length ? r.selS.map(s=>`<div class="bd-row">${s.label}<b>+${s.points}</b></div>`).join('')
+    : '<div class="empty-note">Tidak ada gejala yang dipilih.</div>';
+  const bdB = document.getElementById('bdBehaviors');
+  bdB.innerHTML = r.selB.length ? r.selB.map(b=>`<div class="bd-row">${b.label}<b>+${b.points}</b></div>`).join('')
+    : '<div class="empty-note">Tidak ada perilaku berisiko yang dipilih.</div>';
 
-/* ============ THERMAL OVERLAY ============ */
-.thermal-overlay{position:fixed; inset:0; z-index:400; background:#fbfdff; display:flex; align-items:center; justify-content:center; opacity:0; visibility:hidden; transition:opacity .4s ease, visibility .4s ease;}
-.thermal-overlay.show{opacity:1; visibility:visible;}
-.thermal-inner{text-align:center;}
-.thermal-ring-wrap{position:relative; width:220px; height:220px; margin:0 auto 28px;}
-.thermal-ring-wrap svg{width:100%; height:100%; transform:rotate(-90deg);}
-.thermal-ring-bg{fill:none; stroke:var(--blue-100); stroke-width:12;}
-.thermal-ring-fg{fill:none; stroke:url(#thermalGrad); stroke-width:12; stroke-linecap:round;}
-.thermal-num{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
-.thermal-num .val{font-family:var(--font-m); font-size:38px; font-weight:700; color:var(--ink-900);}
-.thermal-num .deg{font-family:var(--font-m); font-size:14px; color:var(--ink-400);}
-.thermal-status{font-size:14.5px; font-weight:600; color:var(--blue-600); min-height:22px;}
-.thermal-title{font-family:var(--font-d); font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-400); margin-bottom:6px;}
+  const recoLockNote = document.getElementById('recoLockNote');
+  const recoList = document.getElementById('recoList');
+  const recoSub = document.getElementById('recoSub');
+  if(r.category==='tinggi'){
+    recoSub.textContent = 'Fitur rekomendasi dapur dikunci sementara — prioritaskan konsultasi medis terlebih dahulu.';
+    recoLockNote.innerHTML = `<div class="reco-lock-overlay">${iconSvg('lock')}<p>Rekomendasi dapur disembunyikan sementara. Konsultasi dokter adalah prioritas utama Anda saat ini.</p></div>`;
+    recoList.className = 'reco-list reco-locked';
+  } else {
+    recoSub.textContent = 'Langkah konkret berdasarkan hasil penapisan Anda.';
+    recoLockNote.innerHTML = '';
+    recoList.className = 'reco-list';
+  }
+  const tips = r.selB.length ? r.selB.map(b=>b.tip) : ['Kebiasaan dapur Anda sudah menerapkan praktik biosekuriti dasar dengan baik. Pertahankan!'];
+  recoList.innerHTML = tips.map(tip=>`<div class="reco-item"><div class="reco-icon">${iconSvg('check')}</div><p>${tip}</p></div>`).join('');
+}
 
-/* ============ HASIL ============ */
-.hasil-banner{display:none; align-items:center; gap:16px; padding:22px 26px; border-radius:var(--r-lg); background:linear-gradient(90deg,var(--risk-high),#ff5c85); color:#fff; margin-bottom:30px; box-shadow:0 16px 34px rgba(255,51,102,.3);}
-.hasil-banner.show{display:flex;}
-.hasil-banner .hb-icon{width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
-.hasil-banner .hb-icon .icon{stroke:#fff; width:24px; height:24px;}
-.hasil-banner h4{color:#fff; font-size:16px; margin-bottom:4px;}
-.hasil-banner p{font-size:13.5px; opacity:.95;}
+function animateNumber(el, from, to, duration){
+  const start = performance.now();
+  function step(now){
+    const t = Math.min((now-start)/duration, 1);
+    el.textContent = Math.round(from + (to-from)*t);
+    if(t<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
 
-.hasil-grid{display:grid; grid-template-columns:340px 1fr; gap:28px; align-items:start;}
-.score-card{padding:36px 28px; text-align:center; position:sticky; top:100px;}
-.score-gauge-wrap{position:relative; width:200px; height:200px; margin:0 auto 20px;}
-.score-gauge-wrap svg{width:100%; height:100%; transform:rotate(-90deg);}
-.sg-bg{fill:none; stroke:var(--blue-100); stroke-width:14;}
-.sg-fg{fill:none; stroke-width:14; stroke-linecap:round; transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.3,1), stroke 0.4s ease;}
-.score-gauge-num{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
-.score-gauge-num .sv{font-family:var(--font-m); font-size:40px; font-weight:700; color:var(--ink-900);}
-.score-gauge-num .sl{font-size:11px; color:var(--ink-400); font-weight:600; text-transform:uppercase; letter-spacing:.08em;}
-.risk-badge{display:inline-flex; align-items:center; gap:8px; padding:9px 20px; border-radius:999px; font-weight:700; font-size:14px; color:#fff; margin-bottom:14px;}
-.score-card h3{font-size:20px; margin-bottom:10px;}
-.score-card p.closing{font-size:14px; color:var(--ink-500); line-height:1.6;}
+function resetScreening(){
+  SYMPTOMS.forEach(s=>state.symptoms[s.id]=false);
+  BEHAVIORS.forEach(b=>state.behaviors[b.id]=false);
+  state.openRegion=null; state.openZone=null;
+  renderRegionPanels(); syncHotspots(); renderZoneGrid(); renderZonePanels(); updateProgress();
+  switchView('screening');
+  showToast('Screening direset. Silakan mulai kembali.');
+}
 
-.hasil-detail-card{padding:28px 30px; margin-bottom:22px;}
-.hasil-detail-card h4{font-size:16.5px; display:flex; align-items:center; gap:10px; margin-bottom:6px;}
-.hasil-detail-card h4 .icon{width:20px; height:20px; stroke:var(--blue-600);}
-.hasil-detail-card > p.sub{font-size:13.5px; color:var(--ink-500); margin-bottom:16px;}
-.breakdown-list{display:flex; flex-direction:column; gap:8px;}
-.bd-row{display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:12px; background:rgba(46,111,242,.06); font-size:13.5px; color:var(--ink-700); font-weight:500;}
-.bd-row b{font-family:var(--font-m); color:var(--blue-600); font-weight:700;}
-.empty-note{font-size:13.5px; color:var(--ink-400); font-style:italic; padding:10px 4px;}
-
-.reco-list{display:flex; flex-direction:column; gap:10px;}
-.reco-item{display:flex; gap:12px; padding:14px 16px; border-radius:14px; background:rgba(0,201,107,.08);}
-.reco-item .reco-icon{width:26px; height:26px; border-radius:8px; background:var(--risk-low); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
-.reco-item .reco-icon .icon{stroke:#fff; width:15px; height:15px;}
-.reco-item p{font-size:13.5px; color:var(--ink-700); line-height:1.5;}
-.reco-locked{position:relative; filter:blur(2.5px); opacity:.55; pointer-events:none; user-select:none;}
-.reco-lock-overlay{display:flex; align-items:center; gap:12px; padding:18px 20px; border-radius:14px; background:rgba(255,51,102,.08); border:1px dashed var(--risk-high); margin-bottom:14px;}
-.reco-lock-overlay .icon{stroke:var(--risk-high); width:20px; height:20px; flex-shrink:0;}
-.reco-lock-overlay p{font-size:13px; color:var(--ink-700); font-weight:600;}
-
-.hasil-actions{display:flex; gap:14px; justify-content:center; margin-top:8px; flex-wrap:wrap;}
-@media (max-width:940px){.hasil-grid{grid-template-columns:1fr;} .score-card{position:static;}}
-
-/* ============ FOOTER ============ */
-.site-footer{padding:50px 0 40px; margin-top:40px; border-top:1px solid rgba(46,111,242,.14);}
-.footer-inner{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;}
-.footer-inner p{font-size:12.5px; color:var(--ink-400); line-height:1.6;}
-.footer-badges{display:flex; gap:10px; flex-wrap:wrap;}
-
-/* Reveal on scroll */
-.reveal{opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease;}
-.reveal.in-view{opacity:1; transform:translateY(0);}
+/* ================= SCROLL REVEAL ================= */
+const revealObserver = new IntersectionObserver(entries=>{
+  entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('in-view'); revealObserver.unobserve(en.target); } });
+}, {threshold:0.12});
+document.querySelectorAll('.reveal').forEach(el=>revealObserver.observe(el));
