@@ -31,8 +31,28 @@ body{font-family:var(--font-b); color:var(--ink-700); background:linear-gradient
 @media (max-width: 940px) {
     .hasil-grid { grid-template-columns: 1fr; gap: 20px; }
 }
-
-
+.gateway-card {
+    max-width: 560px;
+    width: 85%;
+    padding: 48px 36px;
+    text-align: left;
+    position: relative;
+    border-radius: var(--r-lg); 
+    background: var(--glass-strong);
+   
+}
+.gateway-card p {
+    color: var(--ink-600);
+    font-size: 15px;
+    margin-bottom: 20px; 
+    line-height: 1.6;
+}
+.gateway-check {
+    margin: 30px 0; 
+    padding: 16px;
+    background: var(--blue-100);
+    border-radius: var(--r-md);
+}
 .container{max-width:1180px; margin:0 auto; padding:0 28px;}
 h1,h2,h3,h4{font-family:var(--font-d); color:var(--ink-900); font-weight:700;}
 .btn{display:inline-flex; align-items:center; gap:9px; padding:14px 26px; border-radius:999px; border:none; font-weight:600;}
