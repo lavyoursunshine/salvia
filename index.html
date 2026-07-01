@@ -67,43 +67,7 @@
         </div>
       </div>
       <div class="hero-visual">
-       <div class="hero-ring glass-strong" style="border-radius:50%; overflow:hidden;">
-            <!-- ILUSTRASI SALMONELLA SVG -->
-            <svg class="salmo-anim" viewBox="0 0 200 200" style="position:absolute; width:100%; height:100%;">
-              <defs>
-                <!-- Gradient warna biru ke cyan sama persis dengan aslinya -->
-                <linearGradient id="salmoGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#2e6ff2"/>
-                  <stop offset="100%" stop-color="#12b3c4"/>
-                </linearGradient>
-                <!-- Efek cahaya (Glow) di belakang bakteri -->
-                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="6" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-              </defs>
-              
-              <!-- Grup Bakteri dengan rotasi sedikit miring -->
-              <g transform="translate(100, 100) rotate(-20) translate(-100, -100)" filter="url(#glow)">
-                
-                <!-- Flagela (Rambut/Ekor Bakteri) -->
-                <path d="M45,85 C15,70 15,110 -15,95" fill="none" stroke="url(#salmoGrad)" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
-                <path d="M45,115 C15,130 15,90 -15,105" fill="none" stroke="url(#salmoGrad)" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
-                <path d="M155,85 C185,70 185,110 215,95" fill="none" stroke="url(#salmoGrad)" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
-                <path d="M155,115 C185,130 185,90 215,105" fill="none" stroke="url(#salmoGrad)" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
-                <path d="M80,75 C70,40 100,30 90,0" fill="none" stroke="url(#salmoGrad)" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
-                <path d="M120,125 C130,160 100,170 110,200" fill="none" stroke="url(#salmoGrad)" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
-                
-                <!-- Kapsul Tubuh Utama Salmonella (Berbentuk Kapsul/Batang) -->
-                <rect x="40" y="70" width="120" height="60" rx="30" fill="url(#salmoGrad)"/>
-                
-                <!-- Efek Cahaya / Refleksi Kaca pada Bakteri -->
-                <path d="M55,82 Q100,75 145,82" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.3"/>
-                <circle cx="125" cy="100" r="3" fill="#ffffff" opacity="0.4"/>
-                <circle cx="75" cy="100" r="5" fill="#ffffff" opacity="0.4"/>
-              </g>
-            </svg>
-          </div>
+    
           <div class="hero-ring-stat">
             <div class="num">100</div>
             <div class="lbl">Skor Maksimal</div>
