@@ -180,52 +180,47 @@ main{min-height:70vh;}
 .gateway-foot{font-size:12px; color:var(--ink-400); margin-top:16px; text-align:center;}
 
 /* ============ HERO (BERANDA) ============ */
+/* --- TAMPILAN HERO (Rata Tengah untuk Semua Layar) --- */
 .hero {
     padding: 80px 20px 40px 20px; 
 }
 
 .hero-grid {
     display: grid;
-    grid-template-columns: 1.15fr 0.85fr; 
+    grid-template-columns: 1fr; /* Memaksa jadi 1 kolom penuh di laptop & HP */
     gap: 40px; 
     align-items: center;
-    text-align: left; 
+    text-align: center; /* Membuat semua teks rata tengah */
 }
 
+/* Mengatur Judul Utama */
 .hero h1 {
     font-size: clamp(32px, 4.6vw, 52px); 
     line-height: 1.12;
-    margin: 16px 0 18px 0; 
-    max-width: 620px;
+    margin: 16px auto 18px auto; /* 'auto' kiri-kanan memaksa blok ke tengah */
+    max-width: 760px; /* Sedikit dilebarkan agar judul tidak terlalu cepat turun baris */
 }
 
-.hero h1 .accent{background:linear-gradient(135deg,var(--blue-600),var(--cyan-500)); -webkit-background-clip:text; background-clip:text; color:transparent;}
-
+/* Mengatur Paragraf Penjelasan */
 .hero p.lead {
-    margin: 0 0 30px 0; 
-    max-width: 520px;
+    margin: 0 auto 30px auto; 
+    max-width: 600px;
 }
 
+/* Mengatur Tombol */
 .hero-actions {
     display: flex;
-    justify-content: flex-start; /* Tombol rata kiri */
+    justify-content: center; /* Memaksa deretan tombol ke tengah */
     gap: 14px;
     flex-wrap: wrap;
 }
-@media (max-width: 900px) {
-    .hero-grid {
-        grid-template-columns: 1fr; /* Jadi 1 kolom tumpuk */
-        text-align: center; /* Teks jadi ke tengah biar estetik di layar sempit */
-    }
-    
-    .hero h1, .hero p.lead {
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    .hero-actions {
-        justify-content: center; /* Tombol ikut ke tengah */
-    }
+
+/* Mengatur Badge (Zero AI & Data Tidak Disimpan) di bawah tombol */
+.hero-badges, .trust-indicators {
+    display: flex;
+    justify-content: center; /* Memastikan lencana juga rata tengah */
+    gap: 10px;
+    margin-top: 20px;
 }
 
 .hero-visual{position:relative; padding:30px;}
