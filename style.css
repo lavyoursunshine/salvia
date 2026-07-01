@@ -32,9 +32,9 @@ body{font-family:var(--font-b); color:var(--ink-700); background:linear-gradient
     .hasil-grid { grid-template-columns: 1fr; gap: 20px; }
 }
 .gateway-card {
-    max-width: 560px;
+    max-width: 400px;
     width: 85%;
-    padding: 48px 36px;
+    padding: 48px 48px;
     text-align: left;
     position: relative;
     border-radius: var(--r-lg); 
@@ -48,7 +48,7 @@ body{font-family:var(--font-b); color:var(--ink-700); background:linear-gradient
     line-height: 1.6;
 }
 .gateway-check {
-    margin: 30px 0; 
+    margin: 40px 0; 
     padding: 16px;
     background: var(--blue-100);
     border-radius: var(--r-md);
