@@ -440,3 +440,13 @@ section.block{padding:56px 0;}
 /* Reveal on scroll */
 .reveal{opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease;}
 .reveal.in-view{opacity:1; transform:translateY(0);}
+
+
+.text-gradient {
+    background: linear-gradient(90deg, #2e6ff2 0%, #12b3c4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+}
