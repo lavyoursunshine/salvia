@@ -34,7 +34,7 @@ body{font-family:var(--font-b); color:var(--ink-700); background:linear-gradient
 .gateway-card {
     max-width: 400px;
     width: 85%;
-    max-height : 90vh;
+    max-height : 40vh;
     padding: 48px 48px;
     text-align: left;
     position: relative;
